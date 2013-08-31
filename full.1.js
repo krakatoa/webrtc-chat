@@ -7,6 +7,7 @@ serializePeerData = function(session, iceCandidates) {
     session: { 'sdp': session.sdp, 'type': session.type },
     iceCandidates: iceCandidates
   };
+  console.log("serialized data: " + JSON.stringify(data));
 
   return escape(JSON.stringify(data));
 };
@@ -94,9 +95,12 @@ bSide = function() {
 var aData = readPeerData("A");
 var aSession = aData.session;
 var aIceCandidates = aData.iceCandidates;
+console.log(aSession);
+console.log(aIceCandidates);
 var bSession = null;
 
 bConnection = new webkitRTCPeerConnection(config, {optional: [{RtpDataChannels: true}]});
+console.log("created connection");
 
 bConnection.ondatachannel = function(event) {
   receiveChannel = event.channel;
@@ -106,13 +110,14 @@ bConnection.ondatachannel = function(event) {
 };
 
 bConnection.setRemoteDescription(aSession); // first, setRemoteDescription, then addIceCandidates
+console.log("settingRemoteDescription");
 
 aIceCandidates.forEach(function(ice) { bConnection.addIceCandidate(ice); });
 
 var bIceCandidates = []; bConnection.onicecandidate = function(event) {
   if(event.candidate) {
     bIceCandidates.push(event.candidate);
-    //console.log(event.candidate.candidate.trim());
+    console.log(event.candidate.candidate.trim());
   };
 };
 
@@ -120,7 +125,7 @@ bConnection.ongatheringchange = function(event) {
   // todo: puede pasar que se trigeree dos veces este evento,
   // en ese caso la conexion falla. lo que hay que hacer es volver a pasar el peerData
   if(event.currentTarget.iceGatheringState == 'complete') {
-    //console.log("finished gathering ice candidates");
+    console.log("finished gathering ice candidates");
     bRawIce = [];
     bIceCandidates.forEach(function(c) { bRawIce.push({sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate}); });
     
