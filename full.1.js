@@ -7,7 +7,7 @@ serializePeerData = function(session, iceCandidates) {
     session: { 'sdp': session.sdp, 'type': session.type },
     iceCandidates: iceCandidates
   };
-  console.log("serialized data: " + JSON.stringify(data));
+  //console.log("serialized data: " + JSON.stringify(data));
 
   return escape(JSON.stringify(data));
 };
@@ -59,6 +59,7 @@ sendChannel.onmessage = function(event) {
 };
 
 var aIceCandidates = []; aConnection.onicecandidate = function(event) {
+  console.log(event);
   if(event.candidate) {
     aIceCandidates.push(event.candidate);
     //console.log(event.candidate.candidate.trim());
@@ -69,7 +70,11 @@ var aIceCandidates = []; aConnection.onicecandidate = function(event) {
 finishedGathering = function() {
   //console.log("finished gathering ice candidates");
   aRawIce = [];
-  aIceCandidates.forEach(function(c) { aRawIce.push({sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate}); });
+  aIceCandidates.forEach(function(c) {
+    var data = {sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate};
+    aRawIce.push(data);
+    aIceCandidates = [];
+  });
   
   var serialized = serializePeerData(aSession, aRawIce);
   showPeerData(serialized, "A");
@@ -101,8 +106,8 @@ bSide = function() {
 var aData = readPeerData("A");
 var aSession = aData.session;
 var aIceCandidates = aData.iceCandidates;
-console.log(aSession);
-console.log(aIceCandidates);
+//console.log(aSession);
+//console.log(aIceCandidates);
 var bSession = null;
 
 bConnection = new webkitRTCPeerConnection(config, {optional: [{RtpDataChannels: true}]});
@@ -121,17 +126,23 @@ console.log("settingRemoteDescription");
 aIceCandidates.forEach(function(ice) { bConnection.addIceCandidate(ice); });
 
 var bIceCandidates = []; bConnection.onicecandidate = function(event) {
-  if(event.candidate) {
+  //if(event.candidate) {
+  if(event.currentTarget.iceGatheringState == "gathering") {
     bIceCandidates.push(event.candidate);
-    console.log(event.candidate.candidate.trim());
-  } else {
+    //console.log(event.candidate.candidate.trim());
+  } else if (event.currentTarget.iceGatheringState == "complete") {
     finishedGathering();
   };
 };
 finishedGathering = function() {
   console.log("finished gathering ice candidates");
   bRawIce = [];
-  bIceCandidates.forEach(function(c) { bRawIce.push({sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate}); });
+  bIceCandidates.forEach(function(c) {
+    var data = {sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate};
+    //console.log(data);
+    bRawIce.push(data);
+    bIceCandidates = [];
+  });
   
   var serialized = serializePeerData(bSession, bRawIce);
   showPeerData(serialized, "B");
