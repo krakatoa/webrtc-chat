@@ -62,19 +62,25 @@ var aIceCandidates = []; aConnection.onicecandidate = function(event) {
   if(event.candidate) {
     aIceCandidates.push(event.candidate);
     //console.log(event.candidate.candidate.trim());
+  } else {
+    finishedGathering();
   };
 };
+finishedGathering = function() {
+  //console.log("finished gathering ice candidates");
+  aRawIce = [];
+  aIceCandidates.forEach(function(c) { aRawIce.push({sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate}); });
+  
+  var serialized = serializePeerData(aSession, aRawIce);
+  showPeerData(serialized, "A");
+  console.log("Wait for B");
+};
+/*
 aConnection.ongatheringchange = function(event) {
   if(event.currentTarget.iceGatheringState == 'complete') {
-    //console.log("finished gathering ice candidates");
-    aRawIce = [];
-    aIceCandidates.forEach(function(c) { aRawIce.push({sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate}); });
-    
-    var serialized = serializePeerData(aSession, aRawIce);
-    showPeerData(serialized, "A");
-    console.log("Wait for B");
+    finishedGathering();
   };
-};
+};*/
 /*
 aConnection.onstatechange = function(event) {
   if(event.currentTarget.readyState == "stable") {
@@ -118,22 +124,27 @@ var bIceCandidates = []; bConnection.onicecandidate = function(event) {
   if(event.candidate) {
     bIceCandidates.push(event.candidate);
     console.log(event.candidate.candidate.trim());
+  } else {
+    finishedGathering();
   };
 };
-
+finishedGathering = function() {
+  console.log("finished gathering ice candidates");
+  bRawIce = [];
+  bIceCandidates.forEach(function(c) { bRawIce.push({sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate}); });
+  
+  var serialized = serializePeerData(bSession, bRawIce);
+  showPeerData(serialized, "B");
+  console.log("B is ready");
+};
+/*
 bConnection.ongatheringchange = function(event) {
   // todo: puede pasar que se trigeree dos veces este evento,
   // en ese caso la conexion falla. lo que hay que hacer es volver a pasar el peerData
   if(event.currentTarget.iceGatheringState == 'complete') {
-    console.log("finished gathering ice candidates");
-    bRawIce = [];
-    bIceCandidates.forEach(function(c) { bRawIce.push({sdpMLineIndex: c.sdpMLineIndex, sdpMid: c.sdpMid, candidate: c.candidate}); });
-    
-    var serialized = serializePeerData(bSession, bRawIce);
-    showPeerData(serialized, "B");
-    console.log("B is ready");
+    finishedGathering();
   };
-};
+};*/
 /*bConnection.onstatechange = function(event) {
   if(event.currentTarget.readyState == "stable") {
     hidePeerData("A");
