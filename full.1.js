@@ -1,6 +1,6 @@
-//config = {'iceServers': [{'url': 'turn:fedario%40gmail.com@numb.viagenie.ca', 'credential': 'jdjhthfjwap'}]};
+config = {'iceServers': [{'url': 'turn:fedario%40gmail.com@numb.viagenie.ca', 'credential': 'jdjhthfjwap'}]};
 offerAnswerConstraints = {optional: [], mandatory: {OfferToReceiveAudio: false, OfferToReceiveVideo: false}};
-config = {'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]};
+//config = {'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]};
 
 serializePeerData = function(session, iceCandidates) {
   var data = {
@@ -120,10 +120,11 @@ bConnection.ondatachannel = function(event) {
   };
 };
 
-bConnection.setRemoteDescription(aSession); // first, setRemoteDescription, then addIceCandidates
+// first, setRemoteDescription, then addIceCandidates, by using the successCallback
 console.log("settingRemoteDescription");
-
-aIceCandidates.forEach(function(ice) { bConnection.addIceCandidate(ice); });
+bConnection.setRemoteDescription(aSession, function() {
+  aIceCandidates.forEach(function(ice) { bConnection.addIceCandidate(ice); });
+});
 
 var bIceCandidates = []; bConnection.onicecandidate = function(event) {
   //if(event.candidate) {
@@ -174,10 +175,10 @@ finishASide = function() {
   var bSession = bData.session;
   var bIceCandidates = bData.iceCandidates;
 
-  aConnection.setRemoteDescription(bSession);
-
-  bIceCandidates.forEach(function(ice) { aConnection.addIceCandidate(ice) });
-  console.log("A is ready");
+  aConnection.setRemoteDescription(bSession, function() {
+    bIceCandidates.forEach(function(ice) { aConnection.addIceCandidate(ice) });
+    console.log("A is ready");
+  });
 };
 
 trySend = function() {
